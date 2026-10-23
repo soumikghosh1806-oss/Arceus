@@ -4,12 +4,16 @@ import pytest
 
 from arceus.exceptions import (
     ArceusError,
+    AudioDeviceError,
     ConfigError,
     ConversationError,
     MissingAPIKeyError,
     ModelConnectionError,
     ModelError,
     ModelResponseError,
+    SpeechRecognitionError,
+    SpeechSynthesisError,
+    VoiceError,
 )
 
 
@@ -25,6 +29,10 @@ class TestExceptionHierarchy:
             ModelConnectionError,
             ModelResponseError,
             ConversationError,
+            VoiceError,
+            AudioDeviceError,
+            SpeechRecognitionError,
+            SpeechSynthesisError,
         ],
     )
     def test_subclass_of_arceus_error(self, exc_cls):

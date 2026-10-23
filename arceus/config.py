@@ -26,18 +26,24 @@ from arceus.exceptions import ConfigError
 
 # ── Defaults ───────────────────────────────────────────────────────
 _DEFAULTS: Dict[str, Any] = {
-    "model_backend": "echo",          # echo | openai | ollama
+    "model_backend": "local",         # local (ollama) | echo | openai
     "openai_api_key": "",
     "openai_model": "gpt-3.5-turbo",
     "ollama_host": "http://localhost:11434",
-    "ollama_model": "llama3",
+    "ollama_model": "qwen2.5:3b",
     "system_prompt": (
-        "You are ARCEUS, a friendly and helpful conversational assistant. "
-        "Answer clearly and concisely."
+        "You are ARCEUS, a friendly and intelligent conversational assistant. "
+        "Answer clearly, naturally, and concisely in 1-2 sentences suitable for voice conversation."
     ),
     "max_history": 50,                # messages kept in context
     "temperature": 0.7,
     "max_tokens": 1024,
+    # ── Voice defaults ──────────────────────────────────────────────
+    "voice_record_timeout": 5,        # max recording duration in seconds
+    "voice_stt_engine": "auto",       # auto | vosk | google
+    "voice_vosk_model_path": "",      # path to custom Vosk model folder if any
+    "voice_tts_rate": 180,            # words per minute
+    "voice_tts_volume": 1.0,          # volume 0.0 to 1.0
 }
 
 
@@ -54,6 +60,11 @@ class ArceusConfig:
     max_history: int = 0
     temperature: float = 0.0
     max_tokens: int = 0
+    voice_record_timeout: int = 0
+    voice_stt_engine: str = ""
+    voice_vosk_model_path: str = ""
+    voice_tts_rate: int = 0
+    voice_tts_volume: float = 0.0
 
     # private store for extra / unknown keys
     _extras: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -108,8 +119,15 @@ class ArceusConfig:
 
     def summary(self) -> str:
         """Human-readable one-liner for startup banners."""
+        if self.model_backend == "openai":
+            m_name = self.openai_model
+        elif self.model_backend in ("local", "ollama"):
+            m_name = self.ollama_model
+        else:
+            m_name = self.model_backend
+
         return (
             f"backend={self.model_backend}  "
-            f"model={self.openai_model if self.model_backend == 'openai' else self.ollama_model}  "
+            f"model={m_name}  "
             f"temp={self.temperature}  max_tokens={self.max_tokens}"
         )

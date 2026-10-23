@@ -23,9 +23,9 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="ARCEUS Alpha conversational assistant")
     p.add_argument(
         "--backend",
-        choices=["echo", "openai", "ollama"],
+        choices=["local", "ollama", "echo", "openai"],
         default=None,
-        help="AI backend to use (default: from config or 'echo')",
+        help="AI backend to use (default: 'local' / 'ollama' using qwen2.5:3b)",
     )
     p.add_argument(
         "--config",
@@ -37,6 +37,11 @@ def parse_args() -> argparse.Namespace:
         "--debug",
         action="store_true",
         help="Enable debug logging",
+    )
+    p.add_argument(
+        "--voice",
+        action="store_true",
+        help="Launch ARCEUS in interactive voice conversation mode",
     )
     return p.parse_args()
 
@@ -65,7 +70,17 @@ def main() -> None:
         print(f"[Startup error] {exc}", file=sys.stderr)
         sys.exit(1)
 
-    # ── REPL ───────────────────────────────────────────────────
+    # ── Voice mode branch ──────────────────────────────────────
+    if args.voice:
+        from arceus.voice.controller import VoiceConversationController
+
+        print(banner())
+        print(f"  Config: {config.summary()}")
+        controller = VoiceConversationController(assistant=assistant, config=config)
+        controller.run_loop()
+        return
+
+    # ── Text REPL ──────────────────────────────────────────────
     print(banner())
     print(f"  Config: {config.summary()}")
     print("  Type 'quit' or 'exit' to leave.  '/reset' clears history.\n")

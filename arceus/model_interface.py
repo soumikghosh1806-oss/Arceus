@@ -126,7 +126,7 @@ class OpenAIModel(ModelInterface):
 
 # ── Ollama backend ─────────────────────────────────────────────────
 class OllamaModel(ModelInterface):
-    """Calls a locally-running Ollama server over its REST API."""
+    """Calls a locally-running Ollama server over its /api/generate REST API."""
 
     def __init__(self, config: ArceusConfig) -> None:
         super().__init__(config)
@@ -138,13 +138,47 @@ class OllamaModel(ModelInterface):
                 "Install it with:  pip install requests"
             ) from exc
 
+    def _build_prompt_and_system(self, messages: List[Message]) -> tuple[str, str]:
+        """
+        Extract the system prompt and format conversation turns into a prompt
+        suitable for Ollama's /api/generate endpoint.
+        """
+        system_prompt = self.config.system_prompt or ""
+        conversation: List[str] = []
+
+        for msg in messages:
+            role = (msg.get("role") or "").lower()
+            content = (msg.get("content") or "").strip()
+            if not content:
+                continue
+            if role == "system":
+                system_prompt = content
+            elif role == "user":
+                conversation.append(f"User: {content}")
+            elif role == "assistant":
+                conversation.append(f"Assistant: {content}")
+
+        if not conversation:
+            prompt = ""
+        elif len(conversation) == 1 and conversation[0].startswith("User: "):
+            # Single-turn user prompt
+            prompt = messages[-1].get("content", "").strip()
+        else:
+            # Multi-turn conversation prompt
+            prompt = "\n".join(conversation) + "\nAssistant:"
+
+        return prompt, system_prompt
+
     def generate(self, messages: List[Message]) -> str:
         import requests
 
-        url = f"{self.config.ollama_host}/api/chat"
+        url = f"{self.config.ollama_host.rstrip('/')}/api/generate"
+        prompt, system = self._build_prompt_and_system(messages)
+
         payload = {
             "model": self.config.ollama_model,
-            "messages": messages,
+            "prompt": prompt,
+            "system": system,
             "stream": False,
             "options": {
                 "temperature": self.config.temperature,
@@ -152,19 +186,34 @@ class OllamaModel(ModelInterface):
             },
         }
         try:
-            resp = requests.post(url, json=payload, timeout=120)
+            resp = requests.post(url, json=payload, timeout=60)
+            if resp.status_code == 404:
+                raise ModelError(
+                    f"Model '{self.config.ollama_model}' not found in Ollama. "
+                    f"Download it by running: ollama pull {self.config.ollama_model}"
+                )
             resp.raise_for_status()
             data = resp.json()
-            text = data.get("message", {}).get("content", "")
+            text = data.get("response", "")
             if not text:
-                raise ModelResponseError("Ollama returned an empty message.")
+                raise ModelResponseError("Ollama returned an empty response.")
             return text.strip()
-        except ModelResponseError:
+        except (ModelError, ModelResponseError):
             raise
-        except requests.ConnectionError as exc:
+        except requests.exceptions.Timeout as exc:
+            logger.error("Ollama request timed out: %s", exc)
             raise ModelConnectionError(
-                f"Cannot reach Ollama at {self.config.ollama_host}: {exc}"
+                f"Ollama request timed out after 60s at {self.config.ollama_host}."
             ) from exc
+        except requests.exceptions.ConnectionError as exc:
+            logger.error("Ollama connection error: %s", exc)
+            raise ModelConnectionError(
+                f"Cannot reach Ollama at {self.config.ollama_host}. "
+                "Ensure Ollama is running ('ollama serve' or open the Ollama app)."
+            ) from exc
+        except requests.exceptions.HTTPError as exc:
+            logger.error("Ollama HTTP error: %s", exc)
+            raise ModelResponseError(f"Ollama HTTP error: {exc}") from exc
         except Exception as exc:
             logger.exception("Ollama request failed")
             raise ModelError(f"Ollama error: {exc}") from exc
@@ -173,17 +222,18 @@ class OllamaModel(ModelInterface):
         import requests
 
         try:
-            r = requests.get(self.config.ollama_host, timeout=5)
-            return r.ok
+            r = requests.get(f"{self.config.ollama_host.rstrip('/')}/api/tags", timeout=3)
+            return r.status_code == 200
         except Exception:
             return False
 
 
 # ── Factory ────────────────────────────────────────────────────────
 _BACKENDS: Dict[str, type] = {
+    "local": OllamaModel,
+    "ollama": OllamaModel,
     "echo": EchoModel,
     "openai": OpenAIModel,
-    "ollama": OllamaModel,
 }
 
 

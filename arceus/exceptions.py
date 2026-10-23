@@ -42,3 +42,21 @@ class ModelResponseError(ModelError):
 # ── Conversation ───────────────────────────────────────────────────
 class ConversationError(ArceusError):
     """Raised for problems inside the conversation loop."""
+
+
+# ── Voice ──────────────────────────────────────────────────────────
+class VoiceError(ArceusError):
+    """Base exception for all voice-related errors."""
+
+
+class AudioDeviceError(VoiceError):
+    """Raised when audio input/output devices are unavailable or misconfigured."""
+
+
+class SpeechRecognitionError(VoiceError):
+    """Raised when speech recognition fails or receives unintelligible input."""
+
+
+class SpeechSynthesisError(VoiceError):
+    """Raised when text-to-speech generation or playback fails."""
+

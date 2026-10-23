@@ -14,9 +14,13 @@ from arceus.exceptions import ConfigError
 class TestArceusConfigDefaults:
     """Config should fall back to built-in defaults."""
 
-    def test_default_backend_is_echo(self):
+    def test_default_backend_is_local(self):
         cfg = ArceusConfig.default()
-        assert cfg.model_backend == "echo"
+        assert cfg.model_backend == "local"
+
+    def test_default_ollama_model_is_qwen(self):
+        cfg = ArceusConfig.default()
+        assert cfg.ollama_model == "qwen2.5:3b"
 
     def test_default_temperature(self):
         cfg = ArceusConfig.default()
@@ -82,4 +86,5 @@ class TestArceusConfigHelpers:
 
     def test_summary_contains_backend(self):
         cfg = ArceusConfig.default()
-        assert "echo" in cfg.summary()
+        assert "local" in cfg.summary()
+        assert "qwen2.5:3b" in cfg.summary()
