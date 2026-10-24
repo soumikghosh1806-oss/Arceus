@@ -44,6 +44,8 @@ _DEFAULTS: Dict[str, Any] = {
     "voice_vosk_model_path": "",      # path to custom Vosk model folder if any
     "voice_tts_rate": 180,            # words per minute
     "voice_tts_volume": 1.0,          # volume 0.0 to 1.0
+    # ── HUD defaults ────────────────────────────────────────────────
+    "hud_fullscreen": 0,              # 1 = launch the HUD full-screen (0 = windowed)
 }
 
 
@@ -65,6 +67,7 @@ class ArceusConfig:
     voice_vosk_model_path: str = ""
     voice_tts_rate: int = 0
     voice_tts_volume: float = 0.0
+    hud_fullscreen: int = 0
 
     # private store for extra / unknown keys
     _extras: Dict[str, Any] = field(default_factory=dict, repr=False)

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARCEUS</title>
+  <link rel="stylesheet" href="hud.css">
+</head>
+<body>
+  <div class="console">
+
+    <header class="topbar">
+      <div class="topbar__id">
+        <span class="topbar__name">ARCEUS</span>
+        <span class="topbar__sub">Mission console <span id="version"></span></span>
+      </div>
+      <div class="topbar__link" id="link-status" data-tone="dim">LINK CONNECTING</div>
+      <div class="topbar__actions">
+        <button class="btn btn--small" id="btn-fullscreen" type="button" title="Toggle full-screen (F11). Esc leaves full-screen.">FULLSCREEN</button>
+        <button class="btn btn--small" id="btn-quit" type="button" title="Close ARCEUS (Ctrl+Q)">QUIT</button>
+      </div>
+    </header>
+
+    <main class="stage">
+
+      <!-- LEFT: systems -->
+      <section class="panel panel--systems" aria-labelledby="h-systems">
+        <div class="panel__inner">
+          <h2 class="panel__title" id="h-systems">Systems</h2>
+          <dl class="readouts">
+            <div class="readout"><dt>AI backend</dt><dd id="sys-backend" data-tone="dim">N/A</dd></div>
+            <div class="readout"><dt>Model</dt><dd id="sys-model">N/A</dd></div>
+            <div class="readout"><dt>Model installed</dt><dd id="sys-model-installed" data-tone="dim">N/A</dd></div>
+            <div class="readout"><dt>Model memory</dt><dd id="sys-memory">N/A</dd></div>
+            <div class="readout"><dt>Microphone</dt><dd id="sys-mic" data-tone="dim">N/A</dd></div>
+            <div class="readout"><dt>Last capture</dt><dd id="sys-capture">NONE YET</dd></div>
+            <div class="readout"><dt>Speech recognition</dt><dd id="sys-stt">N/A</dd></div>
+            <div class="readout"><dt>Speech synthesis</dt><dd id="sys-tts">N/A</dd></div>
+          </dl>
+          <div class="gauges">
+            <div class="gauge">
+              <div class="gauge__head"><span>CPU</span><span id="sys-cpu">N/A</span></div>
+              <div class="gauge__track"><div class="gauge__fill" id="sys-cpu-bar"></div></div>
+            </div>
+            <div class="gauge">
+              <div class="gauge__head"><span>RAM</span><span id="sys-ram">N/A</span></div>
+              <div class="gauge__track"><div class="gauge__fill" id="sys-ram-bar"></div></div>
+            </div>
+            <div class="readout readout--runtime"><dt>Runtime</dt><dd id="sys-runtime">N/A</dd></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTRE: core -->
+      <section class="core" id="core" data-state="STANDBY" aria-label="ARCEUS core">
+        <svg class="core__svg" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
+          <circle class="r-ticks" cx="300" cy="300" r="290"/>
+          <circle class="r-line" cx="300" cy="300" r="276"/>
+          <circle class="r-arcs spin-slow" cx="300" cy="300" r="262"/>
+          <circle class="r-fine spin-rev" cx="300" cy="300" r="240"/>
+          <g class="orbit orbit--a"><rect x="-5" y="-5" width="10" height="10" transform="translate(300 38) rotate(45)"/></g>
+          <g class="orbit orbit--b"><rect x="-4" y="-4" width="8" height="8" transform="translate(300 60) rotate(45)"/></g>
+          <g class="orbit orbit--c"><circle r="4" transform="translate(300 82)"/></g>
+          <circle class="r-ripple r-ripple--1" cx="300" cy="300" r="205"/>
+          <circle class="r-ripple r-ripple--2" cx="300" cy="300" r="205"/>
+          <circle class="r-reactor" cx="300" cy="300" r="205"/>
+          <circle class="r-inner" cx="300" cy="300" r="193"/>
+          <g id="bars"></g>
+          <circle class="r-disc" cx="300" cy="300" r="146"/>
+        </svg>
+        <div class="core__text">
+          <div class="core__word">ARCEUS</div>
+          <div class="core__state" id="core-state" aria-live="polite">STANDBY</div>
+          <div class="core__id" id="core-id">ARCEUS CORE / N/A</div>
+        </div>
+        <div class="core__detail" id="core-detail" role="status" hidden></div>
+      </section>
+
+      <!-- RIGHT: mission intelligence -->
+      <section class="panel panel--intel" aria-labelledby="h-intel">
+        <div class="panel__inner">
+          <h2 class="panel__title" id="h-intel">Mission intelligence</h2>
+          <div class="transcript" id="transcript" role="log" aria-live="polite" aria-label="Conversation transcript">
+            <p class="empty" id="transcript-empty">No messages yet. Type a command below or press the microphone.</p>
+          </div>
+          <div class="resp"><span class="resp__label">Response</span><span id="resp-status">AWAITING INPUT</span></div>
+          <h3 class="panel__subtitle">Recent activity</h3>
+          <ol class="activity" id="activity" aria-label="Recent activity">
+            <li class="empty" id="activity-empty">No activity yet.</li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <!-- BOTTOM: command deck -->
+    <footer class="deck">
+      <label class="deck__field">
+        <span class="deck__label">Command</span>
+        <input id="cmd-input" type="text" autocomplete="off" spellcheck="false" maxlength="4000"
+               placeholder="Ask ARCEUS something and press Enter" disabled>
+      </label>
+      <button class="btn btn--primary" id="btn-send" type="button" disabled>SEND</button>
+      <button class="btn btn--mic" id="btn-mic" type="button" disabled aria-label="Speak to ARCEUS (microphone)" title="Record one spoken request">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12h-2z" fill="currentColor"/></svg>
+        <span>MIC</span>
+      </button>
+      <div class="deck__voice" id="mic-state" data-tone="dim" role="status">VOICE N/A</div>
+      <div class="deck__reset">
+        <button class="btn" id="btn-reset" type="button" disabled>RESET</button>
+        <button class="btn btn--small" id="btn-reset-cancel" type="button" hidden>CANCEL</button>
+      </div>
+      <div class="deck__conn" id="deck-conn" data-tone="dim">N/A</div>
+    </footer>
+
+  </div>
+
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script src="hud-model.js"></script>
+  <script src="hud.js"></script>
+</body>
+</html>

@@ -43,12 +43,36 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Launch ARCEUS in interactive voice conversation mode",
     )
+    p.add_argument(
+        "--hud",
+        action="store_true",
+        help="Launch the ARCEUS desktop HUD",
+    )
+    screen = p.add_mutually_exclusive_group()
+    screen.add_argument(
+        "--fullscreen",
+        action="store_true",
+        help="Launch the HUD full-screen",
+    )
+    screen.add_argument(
+        "--windowed",
+        action="store_true",
+        help="Launch the HUD in a window",
+    )
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     setup_logging("DEBUG" if args.debug else "INFO")
+
+    if args.hud and args.voice:
+        print(
+            "[Config error] --hud and --voice cannot be combined: "
+            "the HUD has its own microphone control.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # ── Build config ───────────────────────────────────────────
     try:
@@ -71,6 +95,26 @@ def main() -> None:
         sys.exit(1)
 
     # ── Voice mode branch ──────────────────────────────────────
+    if args.hud:
+        from arceus.exceptions import HudError
+        from arceus.hud import app as hud_app
+
+        fullscreen = (
+            args.fullscreen
+            or (bool(config.hud_fullscreen) and not args.windowed)
+        )
+        try:
+            sys.exit(
+                hud_app.run_hud(
+                    assistant=assistant,
+                    config=config,
+                    fullscreen=fullscreen,
+                )
+            )
+        except HudError as exc:
+            print(f"[HUD error] {exc}", file=sys.stderr)
+            sys.exit(1)
+
     if args.voice:
         from arceus.voice.controller import VoiceConversationController
 
