@@ -60,3 +60,7 @@ class SpeechRecognitionError(VoiceError):
 class SpeechSynthesisError(VoiceError):
     """Raised when text-to-speech generation or playback fails."""
 
+# HUD
+class HudError(ArceusError):
+    """Raised when the desktop HUD cannot start."""
+
